@@ -24,6 +24,9 @@ def build_bilstm_model():
     return model
 
 # === Load model weights and tokenizer ===
+model_lstm = None
+lstm_tokenizer = None
+
 try:
     # Rebuild and build model
     model_lstm = build_bilstm_model()
@@ -35,14 +38,16 @@ try:
 
     with open("tokenizer.json", "r") as f:
         token_json = json.load(f)
-        if token_json is None or len(token_json) == 0:
-            raise ValueError("Tokenizer file is empty or invalid.")
+        
+        if not token_json:  # Check if tokenizer data is empty
+            raise ValueError("Tokenizer JSON is empty or invalid.")
         
         # Convert dictionary to JSON string before loading with tokenizer_from_json
         token_json_str = json.dumps(token_json)
         lstm_tokenizer = tokenizer_from_json(token_json_str)
 
     st.success("✅ Model and tokenizer loaded successfully!")
+
 except Exception as e:
     st.error(f"❌ Error loading model or tokenizer: {e}")
 
@@ -50,21 +55,20 @@ except Exception as e:
 text = st.text_area("✍️ Enter your movie review:")
 
 if st.button("Predict"):
-    try:
-        # Ensure tokenizer is loaded before proceeding
-        if lstm_tokenizer is None:
-            raise ValueError("Tokenizer not loaded correctly.")
-        
-        # Preprocess the text
-        sequence = lstm_tokenizer.texts_to_sequences([text])
-        padded = tf.keras.preprocessing.sequence.pad_sequences(sequence, maxlen=MAX_LEN)
+    if lstm_tokenizer is None:
+        st.error("❌ Tokenizer not loaded correctly. Please reload the page.")
+    else:
+        try:
+            # Preprocess the text
+            sequence = lstm_tokenizer.texts_to_sequences([text])
+            padded = tf.keras.preprocessing.sequence.pad_sequences(sequence, maxlen=MAX_LEN)
 
-        # Predict
-        prediction = model_lstm.predict(padded)[0][0]
-        label = "😊 Positive" if prediction > 0.5 else "😠 Negative"
+            # Predict
+            prediction = model_lstm.predict(padded)[0][0]
+            label = "😊 Positive" if prediction > 0.5 else "😠 Negative"
 
-        # Output
-        st.subheader(f"Prediction: {label}")
-        st.caption(f"Confidence: {prediction:.2f}")
-    except Exception as e:
-        st.error(f"❌ Prediction Error: {e}")
+            # Output
+            st.subheader(f"Prediction: {label}")
+            st.caption(f"Confidence: {prediction:.2f}")
+        except Exception as e:
+            st.error(f"❌ Prediction Error: {e}")
