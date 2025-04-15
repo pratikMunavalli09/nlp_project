@@ -29,9 +29,13 @@ try:
     model_lstm.build(input_shape=(None, MAX_LEN))
     model_lstm.load_weights("bilstm_weights.h5")
 
-    # Load tokenizer
-    with open("bilstm_tokenizer.pkl", "rb") as f:
-        lstm_tokenizer = pickle.load(f)
+    # Load tokenizer from JSON (new, Keras 3-compatible way)
+    from keras.preprocessing.text import tokenizer_from_json
+    import json
+    
+    with open("tokenizer.json", "r") as f:
+        token_json = json.load(f)
+        lstm_tokenizer = tokenizer_from_json(token_json)
 
     st.success("✅ Model and tokenizer loaded successfully!")
 except Exception as e:
