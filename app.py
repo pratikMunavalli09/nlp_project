@@ -1,20 +1,23 @@
 import streamlit as st
 import tensorflow as tf
-import pickle
+# import pickle # No longer needed for tokenizer
+import json # Import json
+from tensorflow.keras.preprocessing.text import tokenizer_from_json # Import the loader function
 import re
 import string
 import nltk
 from nltk.corpus import stopwords
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 import numpy as np
-import os # Import os to check file paths
+import os
 
 # --- Configuration ---
 MODEL_PATH = "bilstm_model.h5"
-TOKENIZER_PATH = "bilstm_tokenizer.pkl"
-MAX_LEN = 200 # Make sure this matches the MAX_LEN used during training
+# TOKENIZER_PATH = "bilstm_tokenizer.pkl" # Old path
+TOKENIZER_CONFIG_PATH = "tokenizer_config.json" # New path for JSON config
+MAX_LEN = 200
 
-# --- NLTK Stopwords Download (run once) ---
+# --- NLTK Stopwords Download ---
 @st.cache_resource
 def download_nltk_data():
     try:
@@ -24,36 +27,51 @@ def download_nltk_data():
 download_nltk_data()
 stop_words = set(stopwords.words('english'))
 
-# --- Text Cleaning Function (same as in training) ---
+# --- Text Cleaning Function ---
 def clean_text(text):
-    if not isinstance(text, str): # Add check for non-string input
+    if not isinstance(text, str):
         return ""
     text = text.lower()
-    text = re.sub(r'<.*?>', '', text)  # remove HTML tags
-    text = re.sub(r'[%s]' % re.escape(string.punctuation), '', text)  # remove punctuation
-    text = re.sub(r'\d+', '', text)  # remove numbers
+    text = re.sub(r'<.*?>', '', text)
+    text = re.sub(r'[%s]' % re.escape(string.punctuation), '', text)
+    text = re.sub(r'\d+', '', text)
     text = ' '.join([word for word in text.split() if word not in stop_words])
     return text
 
-# --- Load Model and Tokenizer (Cached) ---
-@st.cache_resource # Cache the loaded model and tokenizer
+# --- Load Model and Tokenizer (Updated) ---
+@st.cache_resource
 def load_resources():
-    # Check if files exist
-    if not os.path.exists(MODEL_PATH):
-        st.error(f"Model file not found at {MODEL_PATH}")
-        return None, None
-    if not os.path.exists(TOKENIZER_PATH):
-        st.error(f"Tokenizer file not found at {TOKENIZER_PATH}")
-        return None, None
-
+    model = None
+    tokenizer = None
     try:
+        # Check if files exist
+        if not os.path.exists(MODEL_PATH):
+            st.error(f"Model file not found at '{MODEL_PATH}'")
+            return None, None # Return None for both
+        if not os.path.exists(TOKENIZER_CONFIG_PATH):
+            st.error(f"Tokenizer config file not found at '{TOKENIZER_CONFIG_PATH}'")
+            return None, None # Return None for both
+
+        # Load Model
         model = tf.keras.models.load_model(MODEL_PATH)
-        with open(TOKENIZER_PATH, "rb") as f:
-            tokenizer = pickle.load(f)
+        st.write(f"Model loaded successfully from {MODEL_PATH}") # Debug message
+
+        # Load Tokenizer from JSON config
+        with open(TOKENIZER_CONFIG_PATH, "r", encoding="utf-8") as f:
+            tokenizer_json = f.read()
+            tokenizer = tokenizer_from_json(tokenizer_json)
+        st.write(f"Tokenizer loaded successfully from {TOKENIZER_CONFIG_PATH}") # Debug message
+
         return model, tokenizer
+
     except Exception as e:
-        st.error(f"Error loading model or tokenizer: {e}")
-        return None, None
+        st.error(f"Error loading resources: {e}")
+        # Print specifics if possible
+        if model is None:
+            st.error("Failed during model loading.")
+        if tokenizer is None and model is not None:
+             st.error("Failed during tokenizer loading (after model load).")
+        return None, None # Ensure None is returned on error
 
 model_lstm, lstm_tokenizer = load_resources()
 
@@ -71,11 +89,12 @@ if st.button("Predict Sentiment"):
 
             # 2. Tokenize and pad the sequence
             try:
+                # Use the loaded tokenizer
                 sequence = lstm_tokenizer.texts_to_sequences([cleaned_review])
                 padded_sequence = pad_sequences(sequence, maxlen=MAX_LEN)
 
                 # 3. Make prediction
-                prediction = model_lstm.predict(padded_sequence)[0][0] # Get the probability from the output array
+                prediction = model_lstm.predict(padded_sequence)[0][0]
                 sentiment = "😊 Positive" if prediction > 0.5 else "😠 Negative"
                 confidence = prediction if prediction > 0.5 else 1 - prediction
 
@@ -84,12 +103,19 @@ if st.button("Predict Sentiment"):
                 st.caption(f"Confidence: {confidence:.2f} (Raw Score: {prediction:.4f})")
 
             except Exception as e:
-                 st.error(f"An error occurred during prediction: {e}")
-                 st.error(f"Cleaned text was: '{cleaned_review}'") # Help debugging
+                 st.error(f"An error occurred during tokenization or prediction: {e}")
+                 # st.error(f"Cleaned text was: '{cleaned_review}'") # Optional: uncomment for debugging
 
         else:
-            st.warning("Please enter a review.")
+            st.warning("Please enter a review before predicting.")
     else:
-        st.error("Model or tokenizer could not be loaded. Please check the logs.")
+        st.error("Model or tokenizer failed to load. Cannot predict. Please check the deployment logs.")
+        st.info("Ensure 'bilstm_model.h5' and 'tokenizer_config.json' are present in the repository root.")
+
 
 st.sidebar.info(f"Model: BiLSTM\nMax Sequence Length: {MAX_LEN}")
+# Add check status in sidebar
+if model_lstm and lstm_tokenizer:
+    st.sidebar.success("✅ Model & Tokenizer Loaded")
+else:
+    st.sidebar.error("❌ Model/Tokenizer Load Failed")
