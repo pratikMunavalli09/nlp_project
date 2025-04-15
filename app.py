@@ -35,7 +35,9 @@ try:
     
     with open("tokenizer.json", "r") as f:
         token_json = json.load(f)
-        lstm_tokenizer = tokenizer_from_json(token_json)
+        # Convert dictionary to JSON string before loading with tokenizer_from_json
+        token_json_str = json.dumps(token_json)
+        lstm_tokenizer = tokenizer_from_json(token_json_str)
 
     st.success("✅ Model and tokenizer loaded successfully!")
 except Exception as e:
