@@ -1,7 +1,7 @@
 import streamlit as st
 import tensorflow as tf
 import json
-from keras.preprocessing.text import tokenizer_from_json
+from tensorflow.keras.preprocessing.text import tokenizer_from_json
 import re
 import string
 import nltk
