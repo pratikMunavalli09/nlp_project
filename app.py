@@ -16,7 +16,7 @@ MODEL_PATH = "bilstm_model.h5"
 TOKENIZER_CONFIG_PATH = "tokenizer_config.json" # Path for JSON config
 MAX_LEN = 200 # Make sure this matches the MAX_LEN used during training
 
-MODEL_PATH = "bilstm_model.keras" # New path for Keras format
+MODEL_PATH = "nlp_project/bilstm_model.keras" # New path for Keras format
 TOKENIZER_CONFIG_PATH = "tokenizer_config.json"
 MAX_LEN = 200
 
