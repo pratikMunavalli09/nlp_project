@@ -1,75 +1,95 @@
 import streamlit as st
 import tensorflow as tf
-import json
-from tensorflow.keras.preprocessing.text import tokenizer_from_json
+import pickle
+import re
+import string
+import nltk
+from nltk.corpus import stopwords
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+import numpy as np
+import os # Import os to check file paths
 
-# === Constants ===
-MAX_LEN = 200
-MAX_WORDS = 10000
+# --- Configuration ---
+MODEL_PATH = "bilstm_model.h5"
+TOKENIZER_PATH = "bilstm_tokenizer.pkl"
+MAX_LEN = 200 # Make sure this matches the MAX_LEN used during training
 
-# === App UI ===
-st.set_page_config(page_title="IMDb Sentiment Classifier", layout="centered")
-st.sidebar.title("🔧 Model Info")
-st.sidebar.markdown("Using a BiLSTM model (Keras 3 compatible)")
-st.title("🎬 IMDb Sentiment Classifier (BiLSTM Only)")
-st.markdown("Enter a movie review below to get the sentiment prediction:")
+# --- NLTK Stopwords Download (run once) ---
+@st.cache_resource
+def download_nltk_data():
+    try:
+        nltk.data.find('corpora/stopwords')
+    except nltk.downloader.DownloadError:
+        nltk.download('stopwords')
+download_nltk_data()
+stop_words = set(stopwords.words('english'))
 
-# === Rebuild the same BiLSTM architecture ===
-def build_bilstm_model():
-    model = tf.keras.models.Sequential()
-    model.add(tf.keras.layers.Embedding(input_dim=MAX_WORDS, output_dim=128, input_length=MAX_LEN))
-    model.add(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(64)))
-    model.add(tf.keras.layers.Dropout(0.5))
-    model.add(tf.keras.layers.Dense(1, activation='sigmoid'))
-    return model
+# --- Text Cleaning Function (same as in training) ---
+def clean_text(text):
+    if not isinstance(text, str): # Add check for non-string input
+        return ""
+    text = text.lower()
+    text = re.sub(r'<.*?>', '', text)  # remove HTML tags
+    text = re.sub(r'[%s]' % re.escape(string.punctuation), '', text)  # remove punctuation
+    text = re.sub(r'\d+', '', text)  # remove numbers
+    text = ' '.join([word for word in text.split() if word not in stop_words])
+    return text
 
-# === Load model weights and tokenizer ===
-model_lstm = None
-lstm_tokenizer = None
+# --- Load Model and Tokenizer (Cached) ---
+@st.cache_resource # Cache the loaded model and tokenizer
+def load_resources():
+    # Check if files exist
+    if not os.path.exists(MODEL_PATH):
+        st.error(f"Model file not found at {MODEL_PATH}")
+        return None, None
+    if not os.path.exists(TOKENIZER_PATH):
+        st.error(f"Tokenizer file not found at {TOKENIZER_PATH}")
+        return None, None
 
-try:
-    # Rebuild and build model
-    model_lstm = build_bilstm_model()
-    model_lstm.build(input_shape=(None, MAX_LEN))
-    model_lstm.load_weights("bilstm_weights.h5")
+    try:
+        model = tf.keras.models.load_model(MODEL_PATH)
+        with open(TOKENIZER_PATH, "rb") as f:
+            tokenizer = pickle.load(f)
+        return model, tokenizer
+    except Exception as e:
+        st.error(f"Error loading model or tokenizer: {e}")
+        return None, None
 
-    # Load tokenizer from JSON (new, Keras 3-compatible way)
-    with open("tokenizer.json", "r") as f:
-        token_json_str = f.read()  # Read the tokenizer JSON as a string
-        
-        if not token_json_str:  # Check if the tokenizer JSON is empty
-            raise ValueError("Tokenizer JSON is empty or invalid.")
-        
-        # Debugging: Print the loaded tokenizer JSON (first 500 characters)
-        print("Loaded Tokenizer JSON:", token_json_str[:500])  # Show the first 500 characters for inspection
-        
-        # Load the tokenizer from the JSON string
-        lstm_tokenizer = tokenizer_from_json(token_json_str)  # Load tokenizer from JSON string
+model_lstm, lstm_tokenizer = load_resources()
 
-    st.success("✅ Model and tokenizer loaded successfully!")
+# --- Streamlit App Interface ---
+st.title("🎬 IMDb Sentiment Classifier (BiLSTM)")
+st.markdown("Enter a movie review below to classify its sentiment.")
 
-except Exception as e:
-    st.error(f"❌ Error loading model or tokenizer: {e}")
+review_text = st.text_area("✍️ Enter your review here:", height=150)
 
-# === Text Input and Prediction ===
-text = st.text_area("✍️ Enter your movie review:")
+if st.button("Predict Sentiment"):
+    if model_lstm is not None and lstm_tokenizer is not None:
+        if review_text:
+            # 1. Clean the input text
+            cleaned_review = clean_text(review_text)
 
-if st.button("Predict"):
-    if lstm_tokenizer is None:
-        st.error("❌ Tokenizer not loaded correctly. Please reload the page.")
+            # 2. Tokenize and pad the sequence
+            try:
+                sequence = lstm_tokenizer.texts_to_sequences([cleaned_review])
+                padded_sequence = pad_sequences(sequence, maxlen=MAX_LEN)
+
+                # 3. Make prediction
+                prediction = model_lstm.predict(padded_sequence)[0][0] # Get the probability from the output array
+                sentiment = "😊 Positive" if prediction > 0.5 else "😠 Negative"
+                confidence = prediction if prediction > 0.5 else 1 - prediction
+
+                # 4. Display result
+                st.subheader(f"Predicted Sentiment: {sentiment}")
+                st.caption(f"Confidence: {confidence:.2f} (Raw Score: {prediction:.4f})")
+
+            except Exception as e:
+                 st.error(f"An error occurred during prediction: {e}")
+                 st.error(f"Cleaned text was: '{cleaned_review}'") # Help debugging
+
+        else:
+            st.warning("Please enter a review.")
     else:
-        try:
-            # Preprocess the text
-            sequence = lstm_tokenizer.texts_to_sequences([text])
-            padded = tf.keras.preprocessing.sequence.pad_sequences(sequence, maxlen=MAX_LEN)
+        st.error("Model or tokenizer could not be loaded. Please check the logs.")
 
-            # Predict
-            prediction = model_lstm.predict(padded)[0][0]
-            label = "😊 Positive" if prediction > 0.5 else "😠 Negative"
-
-            # Output
-            st.subheader(f"Prediction: {label}")
-            st.caption(f"Confidence: {prediction:.2f}")
-        except Exception as e:
-            st.error(f"❌ Prediction Error: {e}")
-
+st.sidebar.info(f"Model: BiLSTM\nMax Sequence Length: {MAX_LEN}")
