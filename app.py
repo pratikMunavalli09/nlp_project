@@ -1,12 +1,5 @@
 # app.py
 import os
-
-# --- IMPORTANT: Force CPU Usage ---
-# Set CUDA_VISIBLE_DEVICES to '-1' before importing TensorFlow
-# This tells TensorFlow to not use any GPUs.
-os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
-# --- End Force CPU Usage ---
-
 import streamlit as st
 import tensorflow as tf # Now import TensorFlow AFTER setting the environment variable
 import json
