@@ -37,9 +37,13 @@ try:
     with open("tokenizer.json", "r") as f:
         token_json_str = f.read()  # Read the tokenizer JSON as a string
         
-        if not token_json_str:  # Check if the tokenizer JSON is empty or invalid
+        if not token_json_str:  # Check if the tokenizer JSON is empty
             raise ValueError("Tokenizer JSON is empty or invalid.")
         
+        # Debugging: Print the loaded tokenizer JSON (first 500 characters)
+        print("Loaded Tokenizer JSON:", token_json_str[:500])  # Show the first 500 characters for inspection
+        
+        # Load the tokenizer from the JSON string
         lstm_tokenizer = tokenizer_from_json(token_json_str)  # Load tokenizer from JSON string
 
     st.success("✅ Model and tokenizer loaded successfully!")
@@ -68,3 +72,4 @@ if st.button("Predict"):
             st.caption(f"Confidence: {prediction:.2f}")
         except Exception as e:
             st.error(f"❌ Prediction Error: {e}")
+
