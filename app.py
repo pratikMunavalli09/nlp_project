@@ -78,6 +78,7 @@ st.markdown("Enter a movie review to classify its sentiment.")
 
 text_input = st.text_area("✍️ Your Review:", height=150, placeholder="Example: This movie was absolutely amazing!")
 
+# --- Predict Sentiment ---
 if st.button("Predict Sentiment"):
     if model_lstm is None or lstm_tokenizer is None:
         st.error("Model or tokenizer failed to load.")
@@ -87,18 +88,21 @@ if st.button("Predict Sentiment"):
         cleaned = clean_text(text_input)
         sequence = lstm_tokenizer.texts_to_sequences([cleaned])
         if not sequence or not sequence[0]:
-            st.warning("The cleaned input is empty or unknown to the tokenizer.")
+            st.warning("The cleaned input is empty or contains only unknown words.")
         else:
             padded = pad_sequences(sequence, maxlen=MAX_LEN, padding='post')
             prediction = model_lstm.predict(padded)[0][0]
-            # sentiment = "😊 Positive" if prediction > 0.5 else "😠 Negative"
-            sentiment = "😠 Negative" if prediction > 0.5 else "😊 Positive"
-            confidence = prediction if prediction > 0.5 else 1 - prediction
 
-            st.write(f"Raw prediction score: {prediction}")
+            # ✅ Fix: Properly interpret raw prediction
+            sentiment = "😊 Positive" if prediction >= 0.5 else "😠 Negative"
+            confidence = prediction if sentiment == "😊 Positive" else 1 - prediction
+
+            # ✅ Output
+            st.text(f"Raw prediction score: {prediction:.4f}")
             st.subheader(f"Predicted Sentiment: {sentiment}")
             st.caption(f"Confidence: {confidence:.2f}")
             st.progress(confidence)
+
 
 # --- Sidebar Info ---
 st.sidebar.title("ℹ️ Model Info")
