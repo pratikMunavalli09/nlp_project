@@ -5,3 +5,8 @@ transformers
 scikit-learn
 pandas
 numpy
+streamlit
+tensorflow>=2.8.0,<2.16.0
+nltk>=3.6
+numpy>=1.19.5,<2.0.0
+protobuf>=3.20,<4.22
