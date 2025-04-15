@@ -35,12 +35,12 @@ try:
 
     # Load tokenizer from JSON (new, Keras 3-compatible way)
     with open("tokenizer.json", "r") as f:
-        token_json = json.load(f)  # Read the tokenizer JSON data from the file
+        token_json_str = f.read()  # Read the tokenizer JSON as a string
         
-        if not token_json:  # Check if tokenizer JSON data is empty or invalid
+        if not token_json_str:  # Check if the tokenizer JSON is empty or invalid
             raise ValueError("Tokenizer JSON is empty or invalid.")
         
-        lstm_tokenizer = tokenizer_from_json(token_json)  # Load tokenizer from JSON data
+        lstm_tokenizer = tokenizer_from_json(token_json_str)  # Load tokenizer from JSON string
 
     st.success("✅ Model and tokenizer loaded successfully!")
 
