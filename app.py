@@ -12,8 +12,8 @@ import os
 # --- Config ---
 MAX_LEN = 200
 MAX_WORDS = 10000
-MODEL_WEIGHTS_PATH = "bilstm_weights.h51"
-TOKENIZER_CONFIG_PATH = "tokenizer_config1.json"
+MODEL_WEIGHTS_PATH = "bilstm_weights.h5"
+TOKENIZER_CONFIG_PATH = "tokenizer_config.json"
 
 # --- Download NLTK Stopwords ---
 @st.cache_resource
