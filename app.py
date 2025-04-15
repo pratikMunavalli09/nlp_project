@@ -1,6 +1,7 @@
 import streamlit as st
 import tensorflow as tf
 import pickle
+import json
 
 # === Constants ===
 MAX_LEN = 200
@@ -30,8 +31,7 @@ try:
     model_lstm.load_weights("bilstm_weights.h5")
 
     # Load tokenizer from JSON (new, Keras 3-compatible way)
-    from keras.preprocessing.text import tokenizer_from_json
-    import json
+    from tensorflow.keras.preprocessing.text import tokenizer_from_json
     
     with open("tokenizer.json", "r") as f:
         token_json = json.load(f)
