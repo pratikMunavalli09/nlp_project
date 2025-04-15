@@ -2,7 +2,6 @@ import streamlit as st
 import tensorflow as tf
 import pickle
 
-# === App Configuration ===
 st.set_page_config(page_title="IMDb Sentiment Classifier", layout="centered")
 st.sidebar.title("🔧 Model Info")
 st.sidebar.markdown("Using:")
@@ -15,10 +14,10 @@ st.markdown("Enter a movie review below to get a sentiment prediction from the B
 
 # === Load BiLSTM model and tokenizer ===
 try:
-    # Load the BiLSTM model in TensorFlow SavedModel format (NOT .h5)
-    model_lstm = tf.keras.models.load_model("bilstm_model_tf")  # folder name, not file
+    # Load the BiLSTM model (Keras 3 format)
+    model_lstm = tf.keras.models.load_model("bilstm_model.keras")
 
-    # Load the tokenizer
+    # Load tokenizer
     with open("bilstm_tokenizer.pkl", "rb") as f:
         lstm_tokenizer = pickle.load(f)
 
@@ -26,13 +25,12 @@ try:
 except Exception as e:
     st.error(f"❌ Error loading BiLSTM model/tokenizer: {e}")
 
-# === Text Input ===
+# === Input text box ===
 text = st.text_area("✍️ Enter your movie review:")
 
-# === Predict Button ===
 if st.button("Predict Sentiment"):
     try:
-        # Preprocess
+        # Tokenize and pad
         sequence = lstm_tokenizer.texts_to_sequences([text])
         padded = tf.keras.preprocessing.sequence.pad_sequences(sequence, maxlen=MAX_LEN)
 
@@ -40,7 +38,7 @@ if st.button("Predict Sentiment"):
         prediction = model_lstm.predict(padded)[0][0]
         label = "😊 Positive" if prediction > 0.5 else "😠 Negative"
 
-        # Show result
+        # Output
         st.subheader(f"Prediction: {label}")
         st.caption(f"Confidence: {prediction:.2f}")
     except Exception as e:
