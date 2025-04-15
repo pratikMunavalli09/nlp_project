@@ -15,7 +15,8 @@ st.markdown("Enter a movie review below and get a sentiment prediction from the 
 # === Load BiLSTM model and tokenizer ===
 try:
     # Load model with compile=False to avoid time_major error
-    model_lstm = tf.keras.models.load_model("bilstm_model.h5", compile=False)
+    # model_lstm = tf.keras.models.load_model("bilstm_model.h5", compile=False)
+    model_lstm = tf.keras.models.load_model("bilstm_model_tf", compile=False)
 
     # Load tokenizer
     with open("bilstm_tokenizer.pkl", "rb") as f:
