@@ -1,9 +1,9 @@
 streamlit
-tensorflow
+tensorflow>=2.15.0
 torch
 transformers
 scikit-learn
 pandas
 nltk>=3.6
-numpy>=1.19.5,<2.0.0
+numpy>=1.24.3,<2.0.0
 protobuf>=3.20,<4.22
