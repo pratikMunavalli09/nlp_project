@@ -9,6 +9,8 @@ from nltk.corpus import stopwords
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 import os
 
+st.set_page_config(page_title="IMDb Sentiment Classifier")
+
 # --- Config ---
 MAX_LEN = 200
 MAX_WORDS = 10000
@@ -70,7 +72,7 @@ def load_resources():
 model_lstm, lstm_tokenizer = load_resources()
 
 # --- Streamlit UI ---
-st.set_page_config(page_title="IMDb Sentiment Classifier")
+# st.set_page_config(page_title="IMDb Sentiment Classifier")
 st.title("🎬 IMDb Sentiment Classifier (BiLSTM + Keras 3)")
 st.markdown("Enter a movie review to classify its sentiment.")
 
