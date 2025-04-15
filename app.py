@@ -91,9 +91,11 @@ if st.button("Predict Sentiment"):
         else:
             padded = pad_sequences(sequence, maxlen=MAX_LEN, padding='post')
             prediction = model_lstm.predict(padded)[0][0]
-            sentiment = "😊 Positive" if prediction > 0.5 else "😠 Negative"
+            # sentiment = "😊 Positive" if prediction > 0.5 else "😠 Negative"
+            sentiment = "😠 Negative" if prediction > 0.5 else "😊 Positive"
             confidence = prediction if prediction > 0.5 else 1 - prediction
 
+            st.write(f"Raw prediction score: {prediction}")
             st.subheader(f"Predicted Sentiment: {sentiment}")
             st.caption(f"Confidence: {confidence:.2f}")
             st.progress(confidence)
