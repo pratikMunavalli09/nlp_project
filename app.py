@@ -32,9 +32,12 @@ try:
 
     # Load tokenizer from JSON (new, Keras 3-compatible way)
     from tensorflow.keras.preprocessing.text import tokenizer_from_json
-    
+
     with open("tokenizer.json", "r") as f:
         token_json = json.load(f)
+        if token_json is None or len(token_json) == 0:
+            raise ValueError("Tokenizer file is empty or invalid.")
+        
         # Convert dictionary to JSON string before loading with tokenizer_from_json
         token_json_str = json.dumps(token_json)
         lstm_tokenizer = tokenizer_from_json(token_json_str)
@@ -48,6 +51,10 @@ text = st.text_area("✍️ Enter your movie review:")
 
 if st.button("Predict"):
     try:
+        # Ensure tokenizer is loaded before proceeding
+        if lstm_tokenizer is None:
+            raise ValueError("Tokenizer not loaded correctly.")
+        
         # Preprocess the text
         sequence = lstm_tokenizer.texts_to_sequences([text])
         padded = tf.keras.preprocessing.sequence.pad_sequences(sequence, maxlen=MAX_LEN)
