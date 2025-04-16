@@ -73,7 +73,7 @@ model_lstm, lstm_tokenizer = load_resources()
 
 # --- Streamlit UI ---
 # st.set_page_config(page_title="IMDb Sentiment Classifier")
-st.title("🎬 IMDb Sentiment Classifier (BiLSTM + Keras 3)")
+st.title("🎬 IMDb Sentiment Classifier BiLSTM")
 st.markdown("Enter a movie review to classify its sentiment.")
 
 text_input = st.text_area("✍️ Your Review:", height=150, placeholder="Example: This movie was absolutely amazing!")
@@ -83,10 +83,11 @@ if st.button("Predict Sentiment"):
     # --- TextBlob Analysis ---
     blob = TextBlob(text_input)
     tb_polarity = blob.sentiment.polarity
-    tb_sentiment = "😊 Positive" if tb_polarity > 0 else ("😠 Negative" if tb_polarity < 0 else "😐 Neutral")
+    tb_sentiment = "😊 Positive" if tb_polarity > 0 else "😠 Negative"
+    # tb_sentiment = "😊 Positive" if tb_polarity > 0 else ("😠 Negative" if tb_polarity < 0 else "😐 Neutral")
     
     # --- Output TextBlob Result ---
-    st.markdown("### 🧠 TextBlob Sentiment Analysis")
+    st.markdown(f"Predicted Sentiment")
     st.write(f"Polarity Score: `{tb_polarity:.2f}`")
     st.write(f"Predicted Sentiment: **{tb_sentiment}**")
     
@@ -110,10 +111,10 @@ if st.button("Predict Sentiment"):
 
 
             # ✅ Output
-            st.text(f"Raw prediction score: {prediction:.4f}")
-            st.subheader(f"Predicted Sentiment: {sentiment}")
-            st.caption(f"Confidence: {confidence:.2f}")
-            st.progress(confidence)
+            # st.text(f"Raw prediction score: {prediction:.4f}")
+            # st.subheader(f"Predicted Sentiment: {sentiment}")
+            # st.caption(f"Confidence: {confidence:.2f}")
+            # st.progress(confidence)
 
 
 # --- Sidebar Info ---
