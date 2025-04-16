@@ -32,11 +32,10 @@ stop_words = download_nltk_data()
 # --- Text Cleaning ---
 def clean_text(text):
     text = text.lower()
-    text = re.sub(r"<.*?>", "", text)
-    text = re.sub(r"[%s]" % re.escape(string.punctuation), "", text)
-    text = re.sub(r"\d+", "", text)
-    text = " ".join(word for word in text.split() if word not in stop_words)
-    return text
+    text = re.sub(r'<.*?>', '', text)
+    text = re.sub(r'[%s]' % re.escape(string.punctuation), '', text)
+    text = re.sub(r'\d+', '', text)
+    return text.strip()
 
 # --- Define BiLSTM Model ---
 def build_bilstm_model():
@@ -95,7 +94,8 @@ if st.button("Predict Sentiment"):
 
             # ✅ Fix: Properly interpret raw prediction
             sentiment = "😊 Positive" if prediction >= 0.5 else "😠 Negative"
-            confidence = prediction if sentiment == "😊 Positive" else 1 - prediction
+            confidence = prediction if prediction >= 0.5 else 1 - prediction
+
 
             # ✅ Output
             st.text(f"Raw prediction score: {prediction:.4f}")
