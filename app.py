@@ -88,7 +88,7 @@ if st.button("Predict Sentiment"):
     
     # --- Output TextBlob Result ---
     st.markdown(f"Predicted Sentiment")
-    st.write(f"Polarity Score: `{tb_polarity:.2f}`")
+    st.write(f"Raw prediction score: `{tb_polarity:.2f}`")
     st.write(f"Predicted Sentiment: **{tb_sentiment}**")
     
     
